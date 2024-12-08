@@ -31,25 +31,36 @@ const AnalyticsPage = () => {
   if (error) return <ErrorMessage message={error} />;
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
-      <AnalyticsHeader transactions={filteredTransactions} />
-      
-      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Filter Periode</h3>
-        <DateRangePicker
-          startDate={dateRange.startDate}
-          endDate={dateRange.endDate}
-          onStartDateChange={(date) => setDateRange(prev => ({ ...prev, startDate: date }))}
-          onEndDateChange={(date) => setDateRange(prev => ({ ...prev, endDate: date }))}
-        />
+    <div className="h-screen flex flex-col overflow-hidden">
+      <div className="flex-none p-4">
+        <AnalyticsHeader transactions={filteredTransactions} />
       </div>
       
-      <div className="space-y-4">
-        <MonthSummary stats={currentMonthStats} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <MonthlyComparison data={monthlyData} />
-          <PurposeDistribution data={purposeDistribution} />
+      <div className="flex-1 overflow-auto px-4 pb-4">
+        <div className="space-y-4">
+          {/* Date Range Filter */}
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Filter Periode</h3>
+            <DateRangePicker
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+              onStartDateChange={(date) => setDateRange(prev => ({ ...prev, startDate: date }))}
+              onEndDateChange={(date) => setDateRange(prev => ({ ...prev, endDate: date }))}
+            />
+          </div>
+
+          {/* Summary Cards */}
+          <MonthSummary stats={currentMonthStats} />
+          
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg shadow-md">
+              <MonthlyComparison data={monthlyData} />
+            </div>
+            <div className="bg-white rounded-lg shadow-md">
+              <PurposeDistribution data={purposeDistribution} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
