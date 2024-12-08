@@ -1,80 +1,96 @@
 import { useMemo } from 'react';
 import { Transaction } from '../types/transaction';
 
+interface MonthlyData {
+  month: string;
+  deposits: number;
+  withdrawals: number;
+}
+
+interface PurposeData {
+  name: string;
+  value: number;
+}
+
+interface MonthStats {
+  deposits: number;
+  withdrawals: number;
+  netChange: number;
+  transactionCount: number;
+}
+
 export const useAnalyticsData = (transactions: Transaction[]) => {
-  return useMemo(() => {
-    const monthly = {};
-    const purposes = {};
-    let runningBalance = 0;
+  const monthlyData = useMemo(() => {
+    const monthMap = new Map<string, MonthlyData>();
     
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const currentMonthStats = {
-      deposits: 0,
-      withdrawals: 0,
-      netChange: 0,
-      transactionCount: 0
-    };
-
-    // Get last 6 months
-    const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(currentYear, currentMonth - i, 1);
-      const monthYear = date.toLocaleString('default', { month: 'short', year: '2-digit' });
-      months.push(monthYear);
-      monthly[monthYear] = {
-        month: monthYear,
-        deposits: 0,
-        withdrawals: 0,
-        netChange: 0,
-        transactionCount: 0
-      };
-    }
-
-    transactions.forEach((transaction) => {
+    transactions.forEach(transaction => {
       const date = new Date(transaction.date);
-      const monthYear = date.toLocaleString('default', { month: 'short', year: '2-digit' });
-      const amount = transaction.amount;
-
-      if (monthly[monthYear]) {
-        if (transaction.type === 'deposit') {
-          monthly[monthYear].deposits += amount;
-          runningBalance += amount;
-          if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-            currentMonthStats.deposits += amount;
-          }
-        } else {
-          monthly[monthYear].withdrawals += amount;
-          runningBalance -= amount;
-          if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-            currentMonthStats.withdrawals += amount;
-          }
-        }
-
-        monthly[monthYear].netChange = monthly[monthYear].deposits - monthly[monthYear].withdrawals;
-        monthly[monthYear].transactionCount++;
+      const monthKey = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+      
+      if (!monthMap.has(monthKey)) {
+        monthMap.set(monthKey, {
+          month: monthKey,
+          deposits: 0,
+          withdrawals: 0,
+        });
       }
-
-      if (!purposes[transaction.purpose]) {
-        purposes[transaction.purpose] = 0;
+      
+      const monthData = monthMap.get(monthKey)!;
+      if (transaction.type === 'deposit') {
+        monthData.deposits += transaction.amount;
+      } else {
+        monthData.withdrawals += transaction.amount;
       }
-      purposes[transaction.purpose] += amount;
+    });
+    
+    return Array.from(monthMap.values());
+  }, [transactions]);
+
+  const purposeDistribution = useMemo(() => {
+    const purposeMap = new Map<string, number>();
+    
+    transactions.forEach(transaction => {
+      const currentAmount = purposeMap.get(transaction.purpose) || 0;
+      purposeMap.set(
+        transaction.purpose,
+        currentAmount + transaction.amount
+      );
+    });
+    
+    return Array.from(purposeMap.entries()).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  }, [transactions]);
+
+  const currentMonthStats = useMemo(() => {
+    const now = new Date();
+    const currentMonthTransactions = transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      return (
+        transactionDate.getMonth() === now.getMonth() &&
+        transactionDate.getFullYear() === now.getFullYear()
+      );
     });
 
-    currentMonthStats.netChange = currentMonthStats.deposits - currentMonthStats.withdrawals;
-    currentMonthStats.transactionCount = transactions.filter(t => {
-      const date = new Date(t.date);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-    }).length;
-
-    return {
-      monthlyData: months.map(month => monthly[month]),
-      purposeDistribution: Object.entries(purposes)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 6), // Top 6 purposes
-      currentMonthStats
-    };
+    return currentMonthTransactions.reduce(
+      (stats, transaction) => {
+        if (transaction.type === 'deposit') {
+          stats.deposits += transaction.amount;
+        } else {
+          stats.withdrawals += transaction.amount;
+        }
+        stats.netChange = stats.deposits - stats.withdrawals;
+        stats.transactionCount++;
+        return stats;
+      },
+      { deposits: 0, withdrawals: 0, netChange: 0, transactionCount: 0 }
+    );
   }, [transactions]);
+
+  return {
+    monthlyData,
+    purposeDistribution,
+    currentMonthStats,
+  };
 };

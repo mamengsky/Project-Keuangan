@@ -2,11 +2,13 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Sidebar from './components/Sidebar';
+import LoginPage from './pages/LoginPage';
 import DepositPage from './pages/DepositPage';
 import WithdrawPage from './pages/WithdrawPage';
 import TransactionsPage from './pages/TransactionsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import { TransactionProvider } from './contexts/TransactionContext';
+import { AuthProvider, RequireAuth } from './contexts/AuthContext';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -21,40 +23,49 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <RequireAuth>
+      <Layout>{children}</Layout>
+    </RequireAuth>
+  );
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<Navigate to="/deposit" replace />} />
       <Route
         path="/deposit"
         element={
-          <Layout>
+          <ProtectedLayout>
             <DepositPage />
-          </Layout>
+          </ProtectedLayout>
         }
       />
       <Route
         path="/withdraw"
         element={
-          <Layout>
+          <ProtectedLayout>
             <WithdrawPage />
-          </Layout>
+          </ProtectedLayout>
         }
       />
       <Route
         path="/transactions"
         element={
-          <Layout>
+          <ProtectedLayout>
             <TransactionsPage />
-          </Layout>
+          </ProtectedLayout>
         }
       />
       <Route
         path="/analytics"
         element={
-          <Layout>
+          <ProtectedLayout>
             <AnalyticsPage />
-          </Layout>
+          </ProtectedLayout>
         }
       />
     </Routes>
@@ -63,17 +74,19 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <Router>
-      <TransactionProvider>
-        <AppRoutes />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            className: 'text-sm',
-          }} 
-        />
-      </TransactionProvider>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <TransactionProvider>
+          <AppRoutes />
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              className: 'text-sm',
+            }} 
+          />
+        </TransactionProvider>
+      </Router>
+    </AuthProvider>
   );
 }
 

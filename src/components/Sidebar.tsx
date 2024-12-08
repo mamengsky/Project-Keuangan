@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import { Wallet, ArrowDownCircle, ArrowUpCircle, LayoutList, BarChart, Menu, X } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Wallet, ArrowDownCircle, ArrowUpCircle, LayoutList, BarChart, Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const navItems = [
     { to: '/deposit', icon: ArrowDownCircle, text: 'Deposit Uang Brangkas' },
@@ -11,6 +14,11 @@ const Sidebar = () => {
     { to: '/transactions', icon: LayoutList, text: 'Brangkas Trans' },
     { to: '/analytics', icon: BarChart, text: 'Grafik Pemasukkan dan Pengeluaran' },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -54,6 +62,14 @@ const Sidebar = () => {
               <span className="text-sm">{item.text}</span>
             </NavLink>
           ))}
+          
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 p-3 rounded-lg transition-colors mt-4 w-full text-left text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">Logout</span>
+          </button>
         </nav>
       </div>
 
