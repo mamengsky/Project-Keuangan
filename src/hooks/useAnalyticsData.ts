@@ -25,7 +25,14 @@ export const useAnalyticsData = (transactions: Transaction[]) => {
     
     transactions.forEach(transaction => {
       const date = new Date(transaction.date);
-      const monthKey = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+      // Format as "MMM YYYY (6th - 5th)"
+      const year = date.getDate() < 6 ? 
+        (date.getMonth() === 0 ? date.getFullYear() - 1 : date.getFullYear()) :
+        date.getFullYear();
+      const month = date.getDate() < 6 ? 
+        (date.getMonth() === 0 ? 11 : date.getMonth() - 1) :
+        date.getMonth();
+      const monthKey = `${new Date(year, month).toLocaleString('default', { month: 'short' })} ${year}`;
       
       if (!monthMap.has(monthKey)) {
         monthMap.set(monthKey, {
@@ -57,23 +64,13 @@ export const useAnalyticsData = (transactions: Transaction[]) => {
       );
     });
     
-    return Array.from(purposeMap.entries()).map(([name, value]) => ({
-      name,
-      value,
-    }));
+    return Array.from(purposeMap.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value); // Sort by value descending
   }, [transactions]);
 
   const currentMonthStats = useMemo(() => {
-    const now = new Date();
-    const currentMonthTransactions = transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      return (
-        transactionDate.getMonth() === now.getMonth() &&
-        transactionDate.getFullYear() === now.getFullYear()
-      );
-    });
-
-    return currentMonthTransactions.reduce(
+    return transactions.reduce(
       (stats, transaction) => {
         if (transaction.type === 'deposit') {
           stats.deposits += transaction.amount;

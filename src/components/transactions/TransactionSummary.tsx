@@ -5,22 +5,24 @@ import { Transaction } from '../../types/transaction';
 
 interface TransactionSummaryProps {
   transactions: Transaction[];
+  totalBalance: number;
 }
 
-export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ transactions }) => {
+export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ 
+  transactions,
+  totalBalance
+}) => {
   const summary = transactions.reduce(
     (acc, transaction) => {
       const amount = transaction.amount;
       if (transaction.type === 'deposit') {
         acc.totalDeposits += amount;
-        acc.balance += amount;
       } else {
         acc.totalWithdrawals += amount;
-        acc.balance -= amount;
       }
       return acc;
     },
-    { balance: 0, totalDeposits: 0, totalWithdrawals: 0 }
+    { totalDeposits: 0, totalWithdrawals: 0 }
   );
 
   return (
@@ -29,7 +31,7 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ transact
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Balance</p>
-            <p className="text-2xl font-bold text-gray-900">{formatCurrency(summary.balance)}</p>
+            <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalBalance)}</p>
           </div>
           <div className="bg-blue-50 p-3 rounded-full">
             <Wallet className="w-6 h-6 text-blue-600" />
@@ -40,7 +42,7 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ transact
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Total Deposits</p>
+            <p className="text-sm font-medium text-gray-600">Period Deposits</p>
             <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalDeposits)}</p>
           </div>
           <div className="bg-green-50 p-3 rounded-full">
@@ -52,7 +54,7 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({ transact
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Total Withdrawals</p>
+            <p className="text-sm font-medium text-gray-600">Period Withdrawals</p>
             <p className="text-2xl font-bold text-red-600">{formatCurrency(summary.totalWithdrawals)}</p>
           </div>
           <div className="bg-red-50 p-3 rounded-full">

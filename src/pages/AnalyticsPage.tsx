@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
+import { useTransactionPeriod } from '../hooks/useTransactionPeriod';
 import { AnalyticsHeader } from '../components/analytics/AnalyticsHeader';
 import { MonthSummary } from '../components/analytics/MonthSummary';
 import { MonthlyComparison } from '../components/analytics/MonthlyComparison';
@@ -11,10 +12,15 @@ import ErrorMessage from '../components/ErrorMessage';
 
 const AnalyticsPage = () => {
   const { transactions, loading, error } = useTransactions();
+  const defaultPeriod = useTransactionPeriod();
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
+    startDate: defaultPeriod.startDate,
+    endDate: defaultPeriod.endDate,
   });
+
+  const totalBalance = transactions.reduce((acc, transaction) => {
+    return acc + (transaction.type === 'deposit' ? transaction.amount : -transaction.amount);
+  }, 0);
 
   const filteredTransactions = transactions.filter(transaction => {
     const transactionDate = new Date(transaction.date);
@@ -39,18 +45,21 @@ const AnalyticsPage = () => {
       <div className="flex-1 overflow-auto px-4 pb-4">
         <div className="space-y-4">
           {/* Date Range Filter */}
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Filter Periode</h3>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
             <DateRangePicker
               startDate={dateRange.startDate}
               endDate={dateRange.endDate}
               onStartDateChange={(date) => setDateRange(prev => ({ ...prev, startDate: date }))}
               onEndDateChange={(date) => setDateRange(prev => ({ ...prev, endDate: date }))}
+              className="grid grid-cols-2 gap-3"
             />
           </div>
 
           {/* Summary Cards */}
-          <MonthSummary stats={currentMonthStats} />
+          <MonthSummary stats={{
+            ...currentMonthStats,
+            balance: totalBalance
+          }} />
           
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

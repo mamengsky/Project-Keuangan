@@ -1,15 +1,16 @@
 import React from 'react';
-import TransactionForm from '../components/transactions/TransactionForm';
-import { TaxCalculator } from '../components/tax/TaxCalculator';
 import { useTransactions } from '../hooks/useTransactions';
 import { Transaction } from '../types/transaction';
-import { PageHeader } from '../components/ui/PageHeader';
+import WithdrawForm from '../components/withdraw/WithdrawForm';
+import { WithdrawHeader } from '../components/withdraw/WithdrawHeader';
+import { TaxCalculator } from '../components/tax/TaxCalculator';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 
 const WithdrawPage = () => {
   const { transactions, addTransaction, loading, error } = useTransactions();
 
+  // Calculate current balance for tax calculation
   const currentBalance = transactions.reduce((acc, transaction) => {
     return acc + (transaction.type === 'deposit' ? transaction.amount : -transaction.amount);
   }, 0);
@@ -29,16 +30,13 @@ const WithdrawPage = () => {
   if (error) return <ErrorMessage message={error} />;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <PageHeader
-        title="Withdraw Uang Brangkas"
-        description="Record a new withdrawal transaction"
-      />
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <WithdrawHeader />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <TransactionForm type="withdrawal" onSubmit={handleSubmit} />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <WithdrawForm onSubmit={handleSubmit} />
           </div>
         </div>
         

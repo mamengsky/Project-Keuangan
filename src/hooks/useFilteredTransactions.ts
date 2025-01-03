@@ -18,7 +18,7 @@ export const useFilteredTransactions = (
       }
 
       // Purpose filter
-      if (filters.purpose && transaction.purpose !== filters.purpose) {
+      if (filters.purpose && filters.purpose !== 'Semua' && transaction.purpose !== filters.purpose) {
         return false;
       }
 
@@ -27,7 +27,6 @@ export const useFilteredTransactions = (
         return false;
       }
       if (endDate) {
-        // Set end date to end of day for inclusive comparison
         const endOfDay = new Date(endDate);
         endOfDay.setHours(23, 59, 59, 999);
         if (transactionDate > endOfDay) {

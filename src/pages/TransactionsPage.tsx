@@ -5,37 +5,47 @@ import { TransactionSummary } from '../components/transactions/TransactionSummar
 import { TransactionList } from '../components/transactions/TransactionList';
 import { TransactionFilters, TransactionFilters as FilterType } from '../components/transactions/TransactionFilters';
 import { useFilteredTransactions } from '../hooks/useFilteredTransactions';
+import { useTransactionPeriod } from '../hooks/useTransactionPeriod';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 
 const TransactionsPage = () => {
   const { transactions, loading, error } = useTransactions();
+  const defaultPeriod = useTransactionPeriod();
   const [filters, setFilters] = useState<FilterType>({
     type: 'all',
-    purpose: '',
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
+    purpose: 'Semua',
+    ...defaultPeriod
   });
 
   const filteredTransactions = useFilteredTransactions(transactions, filters);
   const purposes = [...new Set(transactions.map(t => t.purpose))];
 
+  const totalBalance = transactions.reduce((acc, transaction) => {
+    return acc + (transaction.type === 'deposit' ? transaction.amount : -transaction.amount);
+  }, 0);
+
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <TransactionHeader transactions={filteredTransactions} />
+    <div className="max-w-7xl mx-auto h-screen flex flex-col overflow-hidden">
+      <div className="flex-none p-4">
+        <TransactionHeader transactions={filteredTransactions} />
+        <TransactionSummary 
+          transactions={filteredTransactions}
+          totalBalance={totalBalance}
+        />
+        <TransactionFilters
+          filters={filters}
+          onFilterChange={setFilters}
+          purposes={purposes}
+        />
+      </div>
       
-      <TransactionSummary transactions={filteredTransactions} />
-      
-      <TransactionFilters
-        filters={filters}
-        onFilterChange={setFilters}
-        purposes={purposes}
-      />
-      
-      <TransactionList transactions={filteredTransactions} />
+      <div className="flex-1 overflow-auto px-4 pb-4">
+        <TransactionList transactions={filteredTransactions} />
+      </div>
     </div>
   );
 };
